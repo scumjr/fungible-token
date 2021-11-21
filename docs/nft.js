@@ -16,12 +16,12 @@ await timeout(1000);return wait_for_tx(tx_hash,(n+1)%5);}
 async function claim_nft(){const account_arg=account;const tokenId=web3.utils.hexToNumberString(account_arg);const instance=new web3.eth.Contract(abi,contract_address);const tx_data=instance.methods.transferFrom('0x0000000000000000000000000000000000000000',account_arg,tokenId).encodeABI();const tx={to:contract_address,from:account,data:tx_data}
 log('Please confirm the transaction...');ethereum.request({method:'eth_sendTransaction',params:[tx]}).then((tx_hash)=>{wait_for_tx(tx_hash,0);}).catch((error)=>{log(error.message);});}
 function check_nft(){const tokenId=web3.utils.hexToNumberString(account);const uri=`${api_uri}/${contract_address}/${tokenId}/validate`;makeRequest('GET',uri).then((tx_hash)=>{logHTML(`Congratulation, you're the proud owner of this <a href="${opensea_url}/${contract_address}/${account}">NFT</a>!`);toggle();}).catch((error)=>{logHTML('It seems you haven\'t claimed your free NFT yet. <a href="#" id="claimIt">Click here to claim it</a> (account: '+account+').');document.getElementById('claimIt').onclick=claim_nft;});}
-async function switch_to_polygon_network(){try{await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x89'}]});}catch(error){log(error.message);}}
+async function switch_to_polygon_network(){try{await ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x89'}]});}catch(error){log(error.message);}}
+async function connect_metamask(){const newAccounts=await ethereum.request({method:'eth_requestAccounts'});handleNewAccounts(newAccounts);}
 if(!isMetaMaskInstalled()){logHTML('Please install <a href="https://metamask.io">MetaMask</a> to claim your NFT.');return;}
 const on_polygon=await is_network_polygon();if(!on_polygon){logHTML('Please switch MetaMask to the Polygon network by clicking <a href="#" id="switchNetwork">here</a>.');document.getElementById('switchNetwork').onclick=switch_to_polygon_network;ethereum.on('chainChanged',handleNetworkChange)
 return;}
 ethereum.on('accountsChanged',handleNewAccounts)
 ethereum.on('chainChanged',handleNetworkChange)
-try{const newAccounts=await ethereum.request({method:'eth_accounts'});handleNewAccounts(newAccounts);}catch(err){console.error('Error on init when getting accounts',err)
-return;}}
+logHTML('Please connect to MetaMask by clicking <a href="#" id="connectMetamask">here</a>.');document.getElementById('connectMetamask').onclick=connect_metamask;}
 window.addEventListener('DOMContentLoaded',main)
