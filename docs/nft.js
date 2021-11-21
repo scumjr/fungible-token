@@ -19,9 +19,9 @@ function check_nft(){const tokenId=web3.utils.hexToNumberString(account);const u
 async function switch_to_polygon_network(){try{await ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x89'}]});}catch(error){log(error.message);}}
 async function connect_metamask(){const newAccounts=await ethereum.request({method:'eth_requestAccounts'});handleNewAccounts(newAccounts);}
 if(!isMetaMaskInstalled()){logHTML('Please install <a href="https://metamask.io">MetaMask</a> to claim your NFT.');return;}
-const on_polygon=await is_network_polygon();if(!on_polygon){logHTML('Please switch MetaMask to the Polygon network by clicking <a href="#" id="switchNetwork">here</a>.');document.getElementById('switchNetwork').onclick=switch_to_polygon_network;ethereum.on('chainChanged',handleNetworkChange)
+const on_polygon=await is_network_polygon();if(!on_polygon){logHTML('Please <a href="#" id="switchNetwork">switch MetaMask to the Polygon network</a>.');document.getElementById('switchNetwork').onclick=switch_to_polygon_network;ethereum.on('chainChanged',handleNetworkChange)
 return;}
 ethereum.on('accountsChanged',handleNewAccounts)
 ethereum.on('chainChanged',handleNetworkChange)
-logHTML('Please connect to MetaMask by clicking <a href="#" id="connectMetamask">here</a>.');document.getElementById('connectMetamask').onclick=connect_metamask;}
+logHTML('Please <a href="#" id="connectMetamask">connect to MetaMask</a>.');document.getElementById('connectMetamask').onclick=connect_metamask;}
 window.addEventListener('DOMContentLoaded',main)
