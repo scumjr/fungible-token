@@ -1,0 +1,27 @@
+function log(msg,append){console.log(msg);var elem=document.getElementById("log");if(!append){elem.innerText=msg;}else{elem.innerText+=msg;}}
+function logHTML(msg){console.log(msg);var elem=document.getElementById("log");elem.innerHTML=msg;}
+const isMetaMaskInstalled=()=>{const{ethereum}=window
+return Boolean(ethereum&&ethereum.isMetaMask)}
+function toggle(){document.querySelector('body').classList.toggle('claimed');}
+function timeout(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+function makeRequest(method,url){return new Promise(function(resolve,reject){let xhr=new XMLHttpRequest();xhr.open(method,url);xhr.onload=function(){if(this.status>=200&&this.status<300){resolve(xhr.response);}else{reject({status:this.status,statusText:xhr.statusText});}};xhr.onerror=function(){reject({status:this.status,statusText:xhr.statusText});};xhr.send();});}
+async function is_network_polygon(){const chainId=await ethereum.request({method:'eth_chainId'});return parseInt(chainId,0)==0x89;}
+const settings_polygon={opensea_url:'https://opensea.io/assets/matic',api_uri:'https://api.opensea.io/api/v1/asset/matic',rpc_url:'https://polygon-rpc.com',etherscan_host:'polygonscan.com',contract_address:'0x458be752b8df24938ff0e6c682ac3827000c2955',};const settings={polygon:settings_polygon,};const main=async()=>{let accounts;let account;let web3;const network='polygon';const opensea_url=settings[network]['opensea_url'];const rpc_url=settings[network]['rpc_url'];const etherscan_host=settings[network]['etherscan_host'];const contract_address=settings[network]['contract_address'];const api_uri=settings[network]['api_uri'];const abi=JSON.parse('[{"inputs":[{"internalType":"address","name":"_from","type":"address"},{"internalType":"address","name":"_to","type":"address"},{"internalType":"uint256","name":"_tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"payable","type":"function"}]');const transfer_abi_inputs=JSON.parse('[{"indexed":true,"internalType":"address","name":"_from","type":"address"},{"indexed":true,"internalType":"address","name":"_to","type":"address"},{"indexed":true,"internalType":"uint256","name":"_tokenId","type":"uint256"}]');const isMetaMaskConnected=()=>accounts&&accounts.length>0;function handleNewAccounts(newAccounts){if(newAccounts.length==0){return;}
+if(accounts!==undefined&&accounts[0]==newAccounts[0]){return;}
+accounts=newAccounts;account=accounts[0];log('Account: '+account);if(web3===undefined){if(rpc_url.startsWith("wss://")){web3=new Web3(new Web3.providers.WebsocketProvider(rpc_url));}else{web3=new Web3(new Web3.providers.HttpProvider(rpc_url));}}
+check_nft();}
+function handleNetworkChange(chainId){log(`The network changed to ${chainId}, reloading the page...`);window.location.reload();}
+async function wait_for_tx(tx_hash,n){logHTML(`The <a href="https://${etherscan_host}/tx/${tx_hash}">transaction</a> was broadcasted... Please wait`+'.'.repeat(n));if(n==0){var receipt=await web3.eth.getTransactionReceipt(tx_hash);if(receipt!==null){logHTML(`Congratulation, you're the proud owner of this <a href="${opensea_url}/${contract_address}/${account}">NFT</a>!`);toggle();return;}}
+await timeout(1000);return wait_for_tx(tx_hash,(n+1)%5);}
+async function claim_nft(){const account_arg=account;const tokenId=web3.utils.hexToNumberString(account_arg);const instance=new web3.eth.Contract(abi,contract_address);const tx_data=instance.methods.transferFrom('0x0000000000000000000000000000000000000000',account_arg,tokenId).encodeABI();const tx={to:contract_address,from:account,data:tx_data}
+log('Please confirm the transaction...');ethereum.request({method:'eth_sendTransaction',params:[tx]}).then((tx_hash)=>{wait_for_tx(tx_hash,0);}).catch((error)=>{log(error.message);});}
+function check_nft(){const tokenId=web3.utils.hexToNumberString(account);const uri=`${api_uri}/${contract_address}/${tokenId}/validate`;makeRequest('GET',uri).then((tx_hash)=>{logHTML(`Congratulation, you're the proud owner of this <a href="${opensea_url}/${contract_address}/${account}">NFT</a>!`);toggle();}).catch((error)=>{logHTML('It seems you haven\'t claimed your free NFT yet. <a href="#" id="claimIt">Click here to claim it</a> (account: '+account+').');document.getElementById('claimIt').onclick=claim_nft;});}
+async function switch_to_polygon_network(){try{await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x89'}]});}catch(error){log(error.message);}}
+if(!isMetaMaskInstalled()){logHTML('Please install <a href="https://metamask.io">MetaMask</a> to claim your NFT.');return;}
+const on_polygon=await is_network_polygon();if(!on_polygon){logHTML('Please switch MetaMask to the Polygon network by clicking <a href="#" id="switchNetwork">here</a>.');document.getElementById('switchNetwork').onclick=switch_to_polygon_network;ethereum.on('chainChanged',handleNetworkChange)
+return;}
+ethereum.on('accountsChanged',handleNewAccounts)
+ethereum.on('chainChanged',handleNetworkChange)
+try{const newAccounts=await ethereum.request({method:'eth_accounts'});handleNewAccounts(newAccounts);}catch(err){console.error('Error on init when getting accounts',err)
+return;}}
+window.addEventListener('DOMContentLoaded',main)
